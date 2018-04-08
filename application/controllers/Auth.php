@@ -32,65 +32,61 @@ class Auth extends CI_Controller{
 
 	public function get_login(){
 		if($_POST){
-			$id = $this->input->post('id',TRUE);
-			$password = $this->input->post('password',TRUE);
+			$input_id = $this->input->post('id',TRUE);
+			$input_password = $this->input->post('password',TRUE);
 			
 			// validation 조건 설정 (태그name, 이름(임의로지정), 조건)
 			$this->form_validation->set_rules('id','ID','required');
 			$this->form_validation->set_rules('password','Password','required');
 
-			$auth_data = array(
-				'user_id' => $id,
-				'password' => $password
-			);
-
-			$result = $this->auth_model->get_check($auth_data);
-
-			if($result){
-				$newdata = array(
-					'user_id' => $result->user_id,
-					'user_name' => $result->user_name,
-					'user_email' => $result->user_email,
-					'logged_in' => TRUE	
-				);
-
-				$this->session->set_userdata($newdata);
-
-				alert('로그인 되었습니다.', '/index.php/main');
-				exit;
-			}else{
-				echo '<p style="text-align:center; color:red;">ID와 PASSWORD가 일치하지 않습니다.</p>';
-				$this->load->view('account/login_form_page');
-				exit;
-			}
-
 			if($this->form_validation->run() == FALSE){//사용자가 입력한 정보를 유효성검사함
 				//validation이 유효하지않은 경우
-				$this->load->view('account/login_form_page');
+				$this->load->view('account/login_form_page'); 
+				// validation과 함께 로그인페이지를 다시 보여줌
 			}else{
 				//validation이 유효한 경우
 				//model을 통해 DB의 값 조회 및 체크 
-				$login_info = $this->auth_model->account_check($id);
 				
-				if($login_info != null){ //select 결과물이 있을때
-					if($password == $login_info->user_password){
-						//입력한 비밀번호가 DB에 저장된 id의 비밀번호와 같은경우
-						//로그인 완료 페이지를 보여줌
-						$this->load->view('home/main_page', array('login_info'=>$login_info));
+				//체크해야할 조건들
+				/*
+				1. ID가 있는지, 
+				2. ID가 있다면 입력한 PASSWORD가 일치하는지,
+				*/
+
+				$auth_data = array(
+					'user_id' => $input_id,
+					'password' => $input_password
+				);
+
+				$result = $this->auth_model->get_check($auth_data);
+
+				if($result){ // 입력한 정보와 일치하는 계정이 있을 경우
+					
+					$result_password = $result->user_password;
+
+					if($result_password == $input_password){ // 입력한 비밀번호화 조회한 비밀번호가 일치할 경우 
+						$newdata = array(
+							'user_id' => $result->user_id,
+							'user_name' => $result->user_name,
+							'user_email' => $result->user_email,
+							'logged_in' => TRUE	
+						);
+
+						$this->session->set_userdata($newdata); // 로그인정보를 세션에 저장
+
+						alert('로그인 되었습니다.', '/index.php/main');
+						exit;
 					}else{
-						//입력한 비밀번호가 DB에 저장된 id의 비밀번호와 다른경우
-						//에러를 보여주고 다시 form 호출
-						echo '<p style="text-align:center; color:red;">ID와 PASSWORD가 일치하지 않습니다.</p>';
-						$this->load->view('account/login_form_page');
-					}			
-				}else{//select 결과물이 없을때
-					echo '<p style="text-align:center; font-weight:bold;">해당 계정이 존재하지 않습니다.</p>';
-					$this->load->view('account/login_form_page');
-				}	
-			}
+						//비밀번호가 틀렸을 경우
+						alert('비밀번호가 일치하지 않습니다. 다시 확인해주세요.', '/index.php/auth');
+					}
+				}else{ // 입력한 정보와 일치하는 계정이 없을 경우
+					alert('입력하신 계정을 찾을 수 없습니다. 계정 정보를 다시 확인해주세요.', '/index.php/auth');
+				}
+			} // validation 끝
 		}else{
 			$this->load->view('account/login_form_page');
-		}
+		} // POST로 넘어온 값이 없을 때
 	}
 
 	public function get_logout(){

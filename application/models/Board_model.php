@@ -38,8 +38,8 @@ class Board_model extends CI_Model{
 
     function get_view($table, $id){
     	// 조회수 증가
-		$sql0 = "UPDATE " . $table . " SET hits = hits + 1 WHERE board_id='" . $id . "'";
-        $this -> db -> query($sql0);
+		$increase_hits = "UPDATE " . $table . " SET hits = hits + 1 WHERE board_id='" . $id . "'";
+        $this -> db -> query($increase_hits);
  
         $sql = "SELECT * FROM " . $table . " WHERE board_id = '" . $id . "'";
         $query = $this -> db -> query($sql);
